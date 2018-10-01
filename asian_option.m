@@ -26,14 +26,13 @@ for k=1:samples               % Sample trajectories
     S0 = s;
     %Sp0 = s;
     %Sn0 = s;
-    savg = s;
-    for t=2:iterations      % Ito time discretisation
+    for t=1:iterations      % Ito time discretisation
         q = randn;
         %Sp1 = Sp0 + r*Sp0*dt + sig*(Sp0^gamma)*sqrt(dt)*q;
         %Sn1 = Sn0 + r*Sn0*dt + sig*(Sn0^gamma)*sqrt(dt)*(-q);
         S1 = S0 + r*S0*dt + sig*(S0^gamma)*sqrt(dt)*q;
     
-        savg(t) = 0.5*(savg(t-1) + S1);
+        S(t) = S1;
         
         %Sp0 = Sp1;
         %Sn0 = Sn1;
@@ -42,17 +41,18 @@ for k=1:samples               % Sample trajectories
     %SpT(k) = Sp1;
     %SnT(k) = Sn1;
     ST(k) = S1;
-    
-    V_asian_fix(k) = max(savg(end)-K,0);
-    V_asian_float(k) = max(S1 - savg(end),0);
+    S_avg(k) = (1/iterations)*sum(S);
+    V_asian_fix(k) = max(S_avg(k) - K,0);
+    V_asian_float(k) = max(S1 - S_avg(k),0);
     %VpT = max(Sp1-K,0);
     %VnT = max(Sn1-K,0);
     %VaT(k) = (VpT+VnT)/2;
     VT(k) = max(S1-K,0);
 end
 %E_Va = mean(VaT);
-E_V = mean(VT);
-E_Vasian = mean(Vasian);
+E_V = exp(-r*T)*mean(VT)
+E_V_asian_fix = exp(-r*T)*mean(V_asian_fix)
+E_V_asian_float = exp(-r*T)*mean(V_asian_float)
 Err = abs(bsexa - E_V);
 %Err(i,2) = abs(bsexa - E_Va);
 
