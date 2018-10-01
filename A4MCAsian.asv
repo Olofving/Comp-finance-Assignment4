@@ -1,0 +1,30 @@
+clc;
+clear;
+close all;
+
+%% Parameters
+S0 = 100;
+K = 90; % Strike price
+r = 0.05;% rate
+sigma = 0.3; 
+timesteps = 1000;
+T = 2;
+simulations = 50000;
+
+%Fixed strike price
+[V0fixed, errorFixedV, Z0fixed, errorFixedZ] = asianOptionMCfixed(S0,K,sigma,r,T,timesteps,simulations);
+disp(V0fixed)
+disp(errorFixedV)
+disp(Z0fixed)
+disp(errorFixedZ)
+
+%Floating strike price
+[V0floating, errorFloating] = asianOptionMCfloating(S0,sigma,r,T,timesteps,simulations);
+
+% %Delta using fixed strike
+deltaS = 0.1;
+[, ,Z0fixedDelta, ] = asianOptionMCfixed(S0-deltaS,K,sigma,r,T,timesteps,simulations);
+
+Delta = (V0fixed - V0fixedDelta)/deltaS
+
+
