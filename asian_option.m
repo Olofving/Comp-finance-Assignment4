@@ -22,6 +22,8 @@ iterations = 10000;                  % Fix itereations
 dt = (T/iterations);
 E = zeros(length(samples),2);
 
+asian_exact = asianOptionexact(sig, r, iterations, K, T, s)
+
 for k=1:samples               % Sample trajectories
     S0 = s;
     %Sp0 = s;
@@ -43,6 +45,7 @@ for k=1:samples               % Sample trajectories
     ST(k) = S1;
     S_avg(k) = (1/iterations)*sum(S);
     V_asian_fix(k) = max(S_avg(k) - K,0);
+    Vgeo(k) = max(exp(mean(log(S)))-K,0);
     V_asian_float(k) = max(S1 - S_avg(k),0);
     %VpT = max(Sp1-K,0);
     %VnT = max(Sn1-K,0);
@@ -50,6 +53,7 @@ for k=1:samples               % Sample trajectories
     VT(k) = max(S1-K,0);
 end
 %E_Va = mean(VaT);
+E_Vgeo = exp(-r*T)*mean(Vgeo)
 E_V = exp(-r*T)*mean(VT)
 E_V_asian_fix = exp(-r*T)*mean(V_asian_fix)
 E_V_asian_float = exp(-r*T)*mean(V_asian_float)
@@ -62,3 +66,14 @@ Err = abs(bsexa - E_V);
 % title('Error of "normal"- vs antithetic variables over 20 simulations')
 % xlabel('samples')
 % ylabel('Average Error')
+
+function sol = asianOptionexact(sigma, r, timesteps, E, T, s)
+
+sigsqT = sigma^2*T*(2*timesteps + 1)/(6*timesteps + 6);
+muT = 0.5*sigsqT + 0.5*(r - 0.5*sigma^2)*T;
+
+d1 = (log(s/E) + (muT + 0.5*sigsqT))/(sqrt(sigsqT));
+d2 = d1 - sqrt(sigsqT);
+
+sol = exp(-r*T)*(s*exp(muT)*normcdf(d1) - E*normcdf(d2)); 
+end
