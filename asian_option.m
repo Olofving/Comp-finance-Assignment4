@@ -18,7 +18,7 @@ bsexa = bsexact(sig, r, K, T, s);
 
 %% Antithetic variables
 samples = 1000;              % Varying no. samples
-iterations = 10000;                  % Fix itereations
+iterations = 100000;                  % Fix itereations
 dt = (T/iterations);
 E = zeros(length(samples),2);
 
@@ -26,38 +26,51 @@ asian_exact = asianOptionexact(sig, r, iterations, K, T, s)
 
 for k=1:samples               % Sample trajectories
     S0 = s;
-    %Sp0 = s;
-    %Sn0 = s;
+    Sp0 = s;
+    Sn0 = s;
     for t=1:iterations      % Ito time discretisation
         q = randn;
-        %Sp1 = Sp0 + r*Sp0*dt + sig*(Sp0^gamma)*sqrt(dt)*q;
-        %Sn1 = Sn0 + r*Sn0*dt + sig*(Sn0^gamma)*sqrt(dt)*(-q);
+        Sp1 = Sp0 + r*Sp0*dt + sig*(Sp0^gamma)*sqrt(dt)*q;
+        Sn1 = Sn0 + r*Sn0*dt + sig*(Sn0^gamma)*sqrt(dt)*(-q);
         S1 = S0 + r*S0*dt + sig*(S0^gamma)*sqrt(dt)*q;
     
         S(t) = S1;
-        
-        %Sp0 = Sp1;
-        %Sn0 = Sn1;
+        Sp(t) = Sp1;
+        Sn(t) = Sn1;
+        Sp0 = Sp1;
+        Sn0 = Sn1;
         S0 = S1;
     end
     %SpT(k) = Sp1;
     %SnT(k) = Sn1;
-    ST(k) = S1;
+    %ST(k) = S1;
     S_avg(k) = (1/iterations)*sum(S);
+    Sp_avg(k) = (1/iterations)*sum(Sp);
+    Sn_avg(k) = (1/iterations)*sum(Sn);
+    
     V_asian_fix(k) = max(S_avg(k) - K,0);
     Vgeo(k) = max(exp(mean(log(S)))-K,0);
     V_asian_float(k) = max(S1 - S_avg(k),0);
-    %VpT = max(Sp1-K,0);
-    %VnT = max(Sn1-K,0);
-    %VaT(k) = (VpT+VnT)/2;
+    
+    Vp_asian_fix = max(Sp_avg(k)-K,0);
+    Vn_asian_fix = max(Sn_avg(k)-K,0);
+    
+    Vp_asian_float = max(Sp1 - Sp_avg(k),0);
+    Vn_asian_float = max(Sn1 - Sn_avg(k),0);
+    
+    Va_asian_fix(k) = (Vp_asian_fix+Vn_asian_fix)/2;
+    Va_asian_float(k) = (Vp_asian_float + Vn_asian_float)/2;
     VT(k) = max(S1-K,0);
 end
 %E_Va = mean(VaT);
-E_Vgeo = exp(-r*T)*mean(Vgeo)
-E_V = exp(-r*T)*mean(VT)
 E_V_asian_fix = exp(-r*T)*mean(V_asian_fix)
+E_Vgeo = exp(-r*T)*mean(Vgeo)
+Ea_V_asian_fix = exp(-r*T)*mean(Va_asian_fix)
+
 E_V_asian_float = exp(-r*T)*mean(V_asian_float)
-Err = abs(bsexa - E_V);
+Ea_V_asian_float = exp(-r*T)*mean(Va_asian_float)
+
+E_V = exp(-r*T)*mean(VT)
 %Err(i,2) = abs(bsexa - E_Va);
 
 % figure
